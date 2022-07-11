@@ -1,0 +1,95 @@
+---
+title: 'Tutorial 1: Pavlovia Data Manipulation'
+author: "Brendan Baker"
+date: "5/17/2022"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction to Data Manipulation for Pavlovia.org and Psychopy__
+### Background
+  Many of the psychology experiments we run in the lab are built in Psychopy or Pavlovia.  Psychopy is both a python package and graphical user interface (GUI) for building psychology experiments on a computer.  Psychopy also comes with a translation feature - where python code is translated into JavaScript - that allows us to run experiments online in the browser.  The website that hosts these online experiments is called pavlovia.org. 
+  
+  The data recorded during the experiment is saved in a folder called data.  In local experiments, the data folder will be in the same folder that you run the experiment from.  For online experiments, the data folder can be retrieved from the website. There are two formats psychopy may use to save experiment data: Database and CSV.  For the lab, we only use the CSV, or comma-separated values format.  In CSV saving format, each instance of the experiment will be saved in a separate .csv file, which the computer can interpret as a spreadsheet. 
+  
+### Step 1: Importing Experiment Results into R
+  The first step to any data processing technique we use is to import the experiment data into R.  Rather than writing a loop to read in each individual csv file, I have written a function called "pavlovia_pull" to save time.  See how to use this function below:
+
+```{r message=FALSE, warning=FALSE}
+# Load packages
+library(tidyverse) # The function uses the tidyverse for data wrangling
+library(docstring) # Docstring will let us view the documentation
+
+# Import the function with source - specify the relative filepath to the function
+source("../helper_functions/pavlovia_pull.R")
+
+# Read over the instructions that will open in the help window:
+## UNCOMMENT BELOW: 
+#docstring::`?`(pavlovia_pull())
+
+```
+
+  Once we have the function imported, the next step is to find the relative filepath to the folder containing the CSVs.  For this project, the folder with the data is in the "data1" folder, which is a subset of the "tutorial_data" folder.  Let's check out what directory we are in right now:
+```{r}
+# Find working directory
+getwd()
+```
+  In my case, I am already in the tutorials folder, so the relative filepath to the data folder would be "./tutorial_data/data1".  For this dataset, we will only specify the filepath and set re_number = T.  The other arguments can be left to the default. Here are some common reasons to change the default arguments:
+  
++ id_label:  If you would want the identifiers to be called something other than "id".  This is not likely for our purposes.
++ col_target: If there is a specific column number that is needed for a file to be considered complete.  You could also set this to "auto" if you would like to take only files with the mode number of columns.  Generally, it will be better to leave this blank unless you need to include duplicate files. 
++ re_number:  This will be the most frequently changed argument.  For some analyses, we need the participant IDs to be consecutive numbers.  We will see examples of this later on. 
++ choose_best: Usually best to keep the default (T).  Often times, a few participants will have had their experiment stop before finishing, then go back to redo the experiment.  When TRUE, the choose_best argument detects duplicate files.  For duplicate files, only the file with the most columns will be returned for that participant.
+
+
+  Okay, let's try to read in the data! 
+```{r warning=FALSE}
+# Read in the data
+results <- pavlovia_pull("./tutorial_data/data1", re_number = T)
+```
+
+  Now that we have the data read into R, let's explore the two parts of the data:
+```{r}
+# Separate the data and the participant info
+data <- results$data
+info <- results$participant_info
+```
+
+  First, the data file, which is constructed as a list of dataframes:
+```{r}
+## UNCOMMENT BELOW:
+#View(data)
+
+# View the head of the first data file
+sort(colnames(data[[1]]))
+
+```
+
+  Next, the participant info, which is just a single dataframe:
+```{r}
+head(info)
+```
+  
+
+## Step 2: Subsetting Specific Tasks
+  Now that we have the data from the experiment loaded into R, the next step is to aggregate specific tasks from the list into a manageable format.  I have written a follow-up function called "listgrab" for this purpose.  
+  
+  Before using this function, open up the first data in the "data1" folder (88491).  Scroll through the entire file - you'll notice that the data looks like diagonally patterned blocks.  Some consecutive columns only contain values in the same rows.  These "blocks" typically contain the data from one task.  For example, look at columns AU through BG in the first data file.  This is a vocabulary task. 
+  
+  The listgrab function will only work if you select columns within one of these blocks, which have the same rows.  For data collected from one task, this will always be the case. 
+  
+  For any task, first think of what information you will need to score or process the data.  For a vocabulary task, we would simply need the participant's answer and the correct answer - just as if you were grading a paper test. Ideally, the variables in the data file should be easily identifiable. .response columns indicate where a  
+  
+  Let's try subsetting the data from the first vocabulary task (there were two in this study).  
+
+```{r echo=TRUE}
+source("../helper_functions/listgrab.R")
+gc_ext <- listgrab(data, vars = c("slider_extend_2.response", "correct"))
+gc_ext
+```
+
