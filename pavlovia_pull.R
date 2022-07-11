@@ -1,33 +1,27 @@
 ############################
 ## Pavlovia Pull Function ##
-## Updated: BB 5.17.22 #####
 ############################
 # Strip data from csvs
 
-
+#' pavlovia_pull
+#'
+#' Function to aggregate data from many csvs.  Primarily designed for use with pavlovia.org experiment output in CSV format.  Input a file destination and receive a list with two components: data and participant_info. 
+#' $data is a list of dataframes where each dataframe is one participant's csv contents.  
+#' $participant_info contains id numbers, new id numbers if re_number = T, and filenames. 
+#'
+#' @param filepath String. filepath to a folder containing all participant csv files.  This wrangling function is intended to work with a file structure of 1 csv per participant. 
+#' @param id_label String. Label for the participant identifier.  Defaults to "id" 
+#' @param col_target NA, numeric, or "auto".  If NA, all files will be read in.  If numeric, only csvs with the specified number of columns will be read in.  If col_target = "auto", only csvs with the mode number of columns will be read.  
+#' @param re_number Boolean.  If True, the id numbers will be changed to consecutive numbers.  Original identifiers will be retained in $participant_info
+#' @param choose_best Boolean.  If True, duplicate files will be detected.  If there are duplicate files, only the single file with the most columns will be read.
+#'
+#' @return List with two objects: $data and $participant_info
+#' @export
+#'
+#' @examples pavlovia_pull(filepath = "./data", re_number = T)
+#' 
 pavlovia_pull <- function(filepath = NA, id_label = "id", col_target = NA, re_number = F, choose_best = T){
-  #' pavlovia_pull
-  #'
-  #' Function to aggregate data from many csvs.  Primarily designed for use with pavlovia.org experiment output in CSV format.  Input a file destination and receive a list with two components: data and participant_info. 
-  #' $data is a list of dataframes where each dataframe is one participant's csv contents.  
-  #' $participant_info contains id numbers, new id numbers if re_number = T, and filenames. 
-  #'
-  #' @param filepath String. filepath to a folder containing all participant csv files.  This wrangling function is intended to work with a file structure of 1 csv per participant. 
-  #' @param id_label String. Label for the participant identifier.  Defaults to "id" 
-  #' @param col_target NA, numeric, or "auto".  If NA, all files will be read in.  If numeric, only csvs with the specified number of columns will be read in.  If col_target = "auto", only csvs with the mode number of columns will be read.  
-  #' @param re_number Boolean.  If True, the id numbers will be changed to consecutive numbers.  Original identifiers will be retained in $participant_info
-  #' @param choose_best Boolean.  If True, duplicate files will be detected.  If there are duplicate files, only the single file with the most columns will be read.
-  #'
-  #' @return List with two objects: $data and $participant_info
-  #' @export
-  #'
-  #' @examples 
-  #' 
-  #' results <- pavlovia_pull(filepath = "./data", re_number = T) # Get results
-  #' data <- results$data  # Separate list with data
-  #' info <- results$participant_info #Separate dataframe with participant information
-  #' 
-  #' 
+  
   
   require(tidyverse)
   
@@ -56,7 +50,6 @@ pavlovia_pull <- function(filepath = NA, id_label = "id", col_target = NA, re_nu
   
   val_list$participant_info <- as_tibble(raw_filenames) # Assign to output list
   
-  ## For duplicate files
   if (choose_best == T){
     multis <- raw_filenames %>% count(id) %>% filter(n>1) # Identify duplicates
     
@@ -91,10 +84,9 @@ pavlovia_pull <- function(filepath = NA, id_label = "id", col_target = NA, re_nu
           pickFile[subdup,3] <- thisSub$id
         }
         pickFile <- pickFile %>% arrange(desc(columns)) %>% 
-          slice_max(n = 1, order_by = columns) %>% select(-columns) # Take file with most columns
+          slice_max(1) %>% select(-columns) # Take file with most columns
         
-        bestFile[ind,] <- suppressWarnings(pickFile)
-        
+        bestFile[ind,] <- pickFile
         remove(pickFile)
         ind <- ind + 1
       }

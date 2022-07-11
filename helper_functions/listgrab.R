@@ -2,19 +2,20 @@
 ## Listgrab function ##
 
 # Follow up function to pavlovia_pull.  Aggregates specific variables from the $data list into one tibble. 
-#' listgrab
-#' A function for subsetting data returned by pavlovia_pull. 
-#'
-#' @param data List.  The $data object returned by pavlovia_pull 
-#' @param vars String.  The variable names you would like to subset
-#' @param clean Boolean.  The function will attempt to remove blank responses if true. 
-#' @param is_pattern Boolean.  If True, the function will return all variables containing the string specified in vars
-#'
-#' @return Returns a tibble with the desired variables as well as the associated IDs. 
-#' @export
-#'
-#' @examples AUTs <- listgrab(data, vars = "AUT", is_pattern = T)
+
 listgrab <- function(data, vars, clean = T, is_pattern = F){
+  #' listgrab
+  #' A function for subsetting data returned by pavlovia_pull. 
+  #'
+  #' @param data List.  The $data object returned by pavlovia_pull 
+  #' @param vars String.  The variable names you would like to subset
+  #' @param clean Boolean.  The function will attempt to remove blank responses if true. 
+  #' @param is_pattern Boolean.  If True, the function will return all variables containing the string specified in vars
+  #'
+  #' @return Returns a tibble with the desired variables as well as the associated IDs. 
+  #' @export
+  #'
+  #' @examples AUTs <- listgrab(data, vars = "AUT", is_pattern = T)
   require(dplyr)
   
   ## Initializing returned data frame
